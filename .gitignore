@@ -1,6 +1,6 @@
 *
 !app
-!app/*
+!app/**
 !package.json
 !package-lock.json
 !tsconfig.json
@@ -10,5 +10,5 @@
 !components
 !components/*
 !lib
-!lib/*
+!lib/**
 !.gitignore
