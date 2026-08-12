@@ -1,0 +1,14 @@
+*
+!app
+!app/*
+!package.json
+!package-lock.json
+!tsconfig.json
+!.env.example
+!README.md
+!next.config.mjs
+!components
+!components/*
+!lib
+!lib/*
+!.gitignore

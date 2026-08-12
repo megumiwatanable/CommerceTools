@@ -1,0 +1,32 @@
+{
+  "name": "commerce-app",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@commercetools/api-request-builder": "^5.0.0",
+    "@commercetools/sdk-client": "^2.0.0",
+    "@commercetools/sdk-middleware-http": "^2.0.0",
+    "@commercetools/sdk-middleware-logger": "^2.0.0",
+    "axios": "^1.6.6",
+    "core-js": "^2.6.12",
+    "js-cookie": "^3.0.5",
+    "next": "^14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "@types/react": "^18.3.4",
+    "@types/react-dom": "^18.3.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.5",
+    "typescript": "^5.5.4"
+  }
+}
