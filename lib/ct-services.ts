@@ -1,4 +1,4 @@
-import { apiRoot, executeRequest, productProjectionService } from '@/lib/ct-client';
+import { apiRoot, executeRequest } from '@/lib/ct-client';
 
 export async function searchProducts({
   query,

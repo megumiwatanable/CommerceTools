@@ -14,9 +14,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="page-shell">
           <SiteHeader />
           <main>{children}</main>
-          <footer className="site-footer">
-            <p>Commerce App kết nối commercetools.</p>
-          </footer>
         </div>
       </body>
     </html>

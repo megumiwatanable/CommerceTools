@@ -26,8 +26,6 @@ export async function POST(request: NextRequest) {
         lastName: lastName.toString(),
       }
     });
-    console.log(response)
-
 
     return NextResponse.redirect(accountUrl);
   } catch (error) {

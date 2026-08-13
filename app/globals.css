@@ -59,7 +59,92 @@ main {
   margin: 0 0 16px;
   font-size: 1.75rem;
 }
+.product-card img,
+.product-detail-image {
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  object-fit: cover;
+}
 
+.product-card {
+  display: flex;
+  flex-direction: column;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.product-card-title {
+  margin: 12px 0 6px;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.product-link img {
+  border-radius: 12px;
+}
+
+.product-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.product-card-title {
+  min-height: 44px;
+  line-height: 1.15;
+}
+
+.product-price,
+.product-meta {
+  margin-bottom: 6px;
+}
+
+.product-price {
+  font-weight: 700;
+  color: #0b5fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.product-meta {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-top: 6px;
+}
+
+.icon {
+  width: 1rem;
+  height: 1rem;
+  display: inline-block;
+}
+
+.icon-price {
+  opacity: 0.85;
+}
+
+.icon-cart {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.button svg {
+  margin-right: 6px;
+}
 .grid {
   display: grid;
   gap: 20px;
@@ -136,7 +221,6 @@ main {
   border: 1px solid #d1d5db;
   border-radius: 12px;
   padding: 12px 14px;
-  margin-top: 10px;
   background: #fff;
   color: #111827;
 }
@@ -158,8 +242,52 @@ main {
 }
 
 .site-header {
-  border-bottom: 1px solid #e5e7eb;
-  padding: 18px 0;
+  border-bottom: 1px solid rgba(14, 20, 30, 0.04);
+  padding: 12px 0;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.brand-bar {
+  padding: 8px 0;
+}
+
+.header-nav a {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.header-nav a:hover {
+  background: #f8fafc;
+}
+
+.page-shell > header + main {
+  padding-top: 12px;
+}
+
+/* Product detail tweaks */
+.product-detail-image {
+  width: 100%;
+  height: 520px;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+.panel .form-group label {
+  font-weight: 600;
+}
+
+.button {
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.button:active {
+  transform: translateY(1px);
 }
 
 .filter-panel {
@@ -211,4 +339,28 @@ main {
   .cart-item {
     grid-template-columns: 1fr;
   }
+}
+
+/* Ensures product grid items stretch to equal heights and layout actions at bottom */
+.grid {
+  align-items: stretch;
+}
+
+.product-card {
+  height: 100%;
+}
+
+.product-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  flex: 1 1 auto;
+}
+
+.product-card-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiRoot } from '@/lib/ct-client';
+import { apiRoot, executeRequest } from '@/lib/ct-client';
 
 export async function POST(request: NextRequest) {
   const body = await request.formData();
@@ -14,22 +14,39 @@ export async function POST(request: NextRequest) {
 
     let cart;
     if (cartId) {
-      const currentCartResponse = await apiRoot.carts().withId({ ID: cartId }).get().execute();
+      const currentCartResponse = await executeRequest({
+        method: 'GET',
+        uri: apiRoot.carts.parse({ id: String(cartId) }).build(),
+      });
       const currentCart = currentCartResponse.body;
-      const cartResponse = await apiRoot.carts().withId({ ID: cartId }).post({
+      const cartResponse = await executeRequest({
+        method: 'POST',
+        uri: apiRoot.carts.parse({ id: String(cartId) }).build(),
         body: {
           version: currentCart.version,
           actions: [{ action: 'addLineItem', sku, quantity }],
         },
-      }).execute();
+      });
       cart = cartResponse.body;
     } else {
-      const cartResponse = await apiRoot.carts().post({
+      // create an empty cart first, then add line item via update action
+      const createResp = await executeRequest({
+        method: 'POST',
+        uri: apiRoot.carts.build(),
         body: {
           currency: 'USD',
-          lineItems: [{ sku, quantity }],
         },
-      }).execute();
+      });
+      const createdCart = createResp.body;
+
+      const cartResponse = await executeRequest({
+        method: 'POST',
+        uri: apiRoot.carts.parse({ id: String(createdCart.id) }).build(),
+        body: {
+          version: createdCart.version,
+          actions: [{ action: 'addLineItem', sku: String(sku), quantity }],
+        },
+      });
       cart = cartResponse.body;
     }
 
@@ -42,29 +59,36 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect('/cart');
   }
 
-  const cartResponse = await apiRoot.carts().withId({ ID: cartId }).get().execute();
+  const cartResponse = await executeRequest({
+    method: 'GET',
+    uri: apiRoot.carts.parse({ id: String(cartId) }).build(),
+  });
   const cart = cartResponse.body;
 
   if (action === 'update') {
     const lineItemId = body.get('lineItemId');
     const quantity = Number(body.get('quantity') || 1);
-    const result = await apiRoot.carts().withId({ ID: cartId }).post({
+    const result = await executeRequest({
+      method: 'POST',
+      uri: apiRoot.carts.parse({ id: String(cartId) }).build(),
       body: {
         version: cart.version,
         actions: [{ action: 'changeLineItemQuantity', lineItemId, quantity }],
       },
-    }).execute();
+    });
     return NextResponse.redirect('/cart');
   }
 
   if (action === 'remove') {
     const lineItemId = body.get('lineItemId');
-    await apiRoot.carts().withId({ ID: cartId }).post({
+    await executeRequest({
+      method: 'POST',
+      uri: apiRoot.carts.parse({ id: String(cartId) }).build(),
       body: {
         version: cart.version,
         actions: [{ action: 'removeLineItem', lineItemId }],
       },
-    }).execute();
+    });
     return NextResponse.redirect('/cart');
   }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiRoot } from '@/lib/ct-client';
+import { apiRoot, executeRequest } from '@/lib/ct-client';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
@@ -17,7 +17,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect('/checkout');
   }
 
-  const cart = await apiRoot.carts().withId({ ID: String(cartId) }).get().execute().then((res) => res.body);
+  const cart = await executeRequest({
+    method: 'GET',
+    uri: apiRoot.carts.parse({ id: String(cartId) }).build(),
+  }).then((res) => res.body);
   const updateActions: Array<any> = [
     {
       action: 'setCustomerEmail',
@@ -36,14 +39,18 @@ export async function POST(request: NextRequest) {
     },
   ];
 
-  const updatedCart = await apiRoot.carts().withId({ ID: String(cartId) }).post({
+  const updatedCart = await executeRequest({
+    method: 'POST',
+    uri: apiRoot.carts.parse({ id: String(cartId) }).build(),
     body: {
       version: cart.version,
       actions: updateActions,
     },
-  }).execute().then((res) => res.body);
+  }).then((res) => res.body);
 
-  await apiRoot.orders().post({
+  await executeRequest({
+    method: 'POST',
+    uri: apiRoot.orders.build(),
     body: {
       idempotencyKey: uuidv4(),
       cart: {
@@ -51,7 +58,7 @@ export async function POST(request: NextRequest) {
         version: updatedCart.version,
       },
     },
-  }).execute();
+  });
 
   return NextResponse.redirect('/order-confirmation');
 }

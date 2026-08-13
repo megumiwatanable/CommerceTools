@@ -1,4 +1,4 @@
-import { getProductBySlug } from '@/lib/ct-services';
+import { getProductBySlug, searchProducts } from '@/lib/ct-services';
 import ProductCard from '@/components/product-card';
 import { notFound } from 'next/navigation';
 
@@ -26,9 +26,28 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const availableQuantity = variant?.availability?.availableQuantity || 0;
   const isInStock = availableQuantity > 0;
 
+  // fetch related products (by first category or by name token)
+  let relatedProducts: any[] = [];
+  try {
+    const categoryId = product.categories?.[0]?.id || product.categories?.[0]?.obj?.id || product.categories?.[0]?.key;
+    const searchRes = await searchProducts({
+      query: '',
+      category: categoryId,
+      limit: 6,
+    });
+    relatedProducts = (searchRes?.results || []).filter((p: any) => p.id !== product.id).slice(0, 3);
+    if (relatedProducts.length === 0) {
+      const nameToken = productName.split(' ')[0] || '';
+      const searchRes2 = await searchProducts({ query: nameToken, limit: 6 });
+      relatedProducts = (searchRes2?.results || []).filter((p: any) => p.id !== product.id).slice(0, 3);
+    }
+  } catch (e) {
+    relatedProducts = [];
+  }
+
   return (
     <div>
-      <div className="grid" style={{ gridTemplateColumns: '1.3fr 0.9fr', gap: '28px' }}>
+      <div className="grid" style={{ gridTemplateColumns: '1fr 420px', gap: '28px' }}>
         <div className="product-card">
           {imageUrl ? (
             <img
@@ -49,48 +68,33 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </p>
             <p style={{ marginTop: '16px', lineHeight: '1.7' }}>{productDescription}</p>
           </div>
-          <form method="post" action="/api/cart">
+          <form method="post" action="/api/cart" className="form-group">
             <input type="hidden" name="action" value="add" />
             <input type="hidden" name="sku" value={sku} />
 
-            <div style={{ marginBottom: '16px' }}>
-              <label htmlFor="quantity" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                Quantity:
-              </label>
-              <input
-                type="number"
-                id="quantity"
-                name="quantity"
-                defaultValue="1"
-                min="1"
-                max={availableQuantity || 99}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '16px'
-                }}
-                disabled={!isInStock}
-              />
-              {!isInStock && (
-                <p style={{ color: '#dc3545', marginTop: '8px', fontSize: '14px' }}>
-                  This product is currently out of stock.
-                </p>
-              )}
-            </div>
-
-            <button
-              className="button"
-              type="submit"
+            <label htmlFor="quantity">Quantity</label>
+            <input
+              type="number"
+              id="quantity"
+              name="quantity"
+              defaultValue={1}
+              min={1}
+              max={availableQuantity || 99}
+              className="input"
               disabled={!isInStock}
-              style={{
-                opacity: isInStock ? 1 : 0.6,
-                cursor: isInStock ? 'pointer' : 'not-allowed'
-              }}
-            >
-              {isInStock ? 'Add to cart' : 'Out of Stock'}
-            </button>
+            />
+
+            {!isInStock && (
+              <p style={{ color: '#dc3545', marginTop: '8px', fontSize: '14px' }}>
+                This product is currently out of stock.
+              </p>
+            )}
+
+            <div style={{ marginTop: '14px' }}>
+              <button className="button" type="submit" disabled={!isInStock}>
+                {isInStock ? 'Add to cart' : 'Out of Stock'}
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -98,7 +102,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <section style={{ marginTop: '32px' }}>
         <h2 className="section-title">You may also like</h2>
         <div className="grid grid-3">
-          <ProductCard key={product.id} product={product} />
+          {relatedProducts.length === 0 ? (
+            <p>No recommendations available.</p>
+          ) : (
+            relatedProducts.map((p: any) => <ProductCard key={p.id} product={p} />)
+          )}
         </div>
       </section>
     </div>
