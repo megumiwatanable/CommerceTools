@@ -32,7 +32,7 @@ main {
 
 .site-footer {
   border-top: 1px solid #e5e7eb;
-  padding: 24px 0;
+  padding: 20px;
   text-align: center;
   font-size: 0.95rem;
   color: #6b7280;
@@ -44,6 +44,28 @@ main {
   align-items: center;
   gap: 16px;
   padding: 24px 0;
+}
+
+.header-search {
+  flex: 1 1 600px;
+  display: flex;
+  justify-content: center;
+}
+
+.header-search .input {
+  width: 100%;
+  max-width: 720px;
+  border-radius: 999px;
+  padding: 10px 16px;
+  box-shadow: 0 2px 8px rgba(16,24,40,0.04);
+}
+
+.button-secondary {
+  background: transparent;
+  border: 1px solid #e6eefc;
+  color: #334155;
+  padding: 8px 12px;
+  border-radius: 999px;
 }
 
 .hero-card,
