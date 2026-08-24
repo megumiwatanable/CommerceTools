@@ -16,7 +16,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: { e
         </div>
       </div>
 
-      {lineItems.length === 0 ? (
+      {cart === null || lineItems.length === 0 ? (
         <div className="panel">
           <p>Your cart is empty. Add some products before checkout.</p>
         </div>
