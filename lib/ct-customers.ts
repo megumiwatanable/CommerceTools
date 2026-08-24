@@ -1,4 +1,4 @@
-import {apiRoot, executeRequest} from '@/lib/ct-client';
+import { apiRoot } from '@/lib/ct-client';
 import { cookies } from 'next/headers';
 
 export async function getCurrentCustomer() {
@@ -8,20 +8,9 @@ export async function getCurrentCustomer() {
   }
 
   try {
-    const uri = apiRoot
-      .customers
-      .parse({
-        id: customerId
-      })
-      .build();
-    const result = await executeRequest({
-      method: 'GET',
-      uri: uri
-    });
-    console.log(uri)
-    return result.body;
+    return (await apiRoot.customers().withId({ ID: customerId }).get().execute()).body;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Failed to fetch customer:', error);
     return null;
   }
 }

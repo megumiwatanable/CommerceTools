@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {apiRoot, executeRequest} from '@/lib/ct-client';
+import { apiRoot } from '@/lib/ct-client';
 
 export async function POST(request: NextRequest) {
   const body = await request.formData();
@@ -14,18 +14,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const response = await executeRequest({
-      method: 'POST',
-      uri: apiRoot
-        .login
-        .build(),
+    await apiRoot.customers().post({
       body: {
         email: email.toString(),
         password: password.toString(),
         firstName: firstName.toString(),
         lastName: lastName.toString(),
       }
-    });
+    }).execute();
 
     return NextResponse.redirect(accountUrl);
   } catch (error) {

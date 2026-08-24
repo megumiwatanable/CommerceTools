@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
+import { formatMoney, selectPublicPrice } from '@/lib/money';
 
 interface ProductCardProps {
   product: any;
@@ -6,8 +8,9 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const variant = product.masterVariant;
-  const priceData = variant?.prices?.[0]?.value;
-  const price = priceData ? `${priceData.centAmount / 100} ${priceData.currencyCode}` : 'Contact us';  const imageUrl = variant.images?.[0]?.url;
+  const country = cookies().get('commerce_country')?.value ?? 'US';
+  const productPrice = selectPublicPrice(variant?.prices, country);
+  const imageUrl = variant.images?.[0]?.url;
   const slug = product.slug?.['en-US'] || product.id;
 
   return (
@@ -25,7 +28,14 @@ export default function ProductCard({ product }: ProductCardProps) {
             <path d="M12 1v22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             <path d="M17 5H7v6a5 5 0 0010 0V5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          {price}
+          {productPrice ? (
+            <>
+              {productPrice.discounted && <s className="price-original">{formatMoney(productPrice.value)}</s>}
+              <span className={productPrice.discounted ? 'price-discounted' : undefined}>
+                {formatMoney(productPrice.discounted?.value ?? productPrice.value)}
+              </span>
+            </>
+          ) : 'Contact us'}
         </p>
         <p className="product-meta">SKU: {variant.sku}</p>
 

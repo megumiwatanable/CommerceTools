@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: 'Storefront B2C connected to commercetools',
 };
 
+// Category navigation and storefront data are loaded from commercetools per request.
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">

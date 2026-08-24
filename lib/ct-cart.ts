@@ -1,4 +1,4 @@
-import { apiRoot, executeRequest } from '@/lib/ct-client';
+import { apiRoot } from '@/lib/ct-client';
 import { cookies } from 'next/headers';
 
 function getCartCookie() {
@@ -7,43 +7,22 @@ function getCartCookie() {
 
 export async function getCartFromRequest() {
   const cartId = getCartCookie();
-  if (!cartId) {
-    return null;
-  }
+  if (!cartId) return null;
 
-  const result = await executeRequest({
-    method: 'GET',
-    uri: apiRoot.carts.parse({ id: String(cartId) }).build(),
-  });
+  const result = await apiRoot.carts().withId({ ID: cartId }).get().execute();
   return result.body;
 }
 
-export async function createCart(lineItems: Array<any>) {
-  // create empty cart
-  const createResp = await executeRequest({
-    method: 'POST',
-    uri: apiRoot.carts.build(),
-    body: {
-      currency: 'USD',
-    },
-  });
-  let cart = createResp.body;
+export async function createCart(lineItems: Array<{ sku?: string; SKU?: string; productSku?: string; quantity?: number; qty?: number }>, currency: string) {
+  let cart = (await apiRoot.carts().post({ body: { currency } }).execute()).body;
 
-  // if line items provided, add them via update actions
-  if (lineItems && lineItems.length > 0) {
-    for (const li of lineItems) {
-      const sku = li.sku || li.SKU || li.productSku;
-      const quantity = li.quantity || li.qty || 1;
-      const resp = await executeRequest({
-        method: 'POST',
-        uri: apiRoot.carts.parse({ id: String(cart.id) }).build(),
-        body: {
-          version: cart.version,
-          actions: [{ action: 'addLineItem', sku: String(sku), quantity }],
-        },
-      });
-      cart = resp.body;
-    }
+  for (const lineItem of lineItems ?? []) {
+    const sku = lineItem.sku ?? lineItem.SKU ?? lineItem.productSku;
+    if (!sku) continue;
+    const quantity = lineItem.quantity ?? lineItem.qty ?? 1;
+    cart = (await apiRoot.carts().withId({ ID: cart.id }).post({
+      body: { version: cart.version, actions: [{ action: 'addLineItem', sku, quantity }] },
+    }).execute()).body;
   }
 
   return cart;

@@ -1,10 +1,11 @@
 import { getCartFromRequest } from '@/lib/ct-cart';
 import Link from 'next/link';
+import { formatMoney } from '@/lib/money';
 
-export default async function CartPage() {
+export default async function CartPage({ searchParams }: { searchParams: { error?: string; cart_replaced?: string } }) {
   const cart = await getCartFromRequest();
   const lineItems = cart?.lineItems ?? [];
-  const totalPrice = cart?.totalPrice?.centAmount ? `${(cart.totalPrice.centAmount / 100).toFixed(2)} ${cart.totalPrice.currencyCode}` : '0.00';
+  const totalPrice = formatMoney(cart?.totalPrice);
 
   return (
     <div>
@@ -18,6 +19,13 @@ export default async function CartPage() {
         </Link>
       </div>
 
+      {searchParams.cart_replaced === 'price_context_changed' && (
+        <p className="panel">A new cart was started because this product uses a different price country or currency.</p>
+      )}
+      {searchParams.error && (
+        <p className="panel">This item could not be added to your cart. Please try again.</p>
+      )}
+
       {lineItems.length === 0 ? (
         <div className="panel">
           <p>Your cart is empty.</p>
@@ -29,12 +37,17 @@ export default async function CartPage() {
         <div className="cart-list">
           {lineItems.map((item: any) => (
             <div key={item.id} className="cart-item">
-              <img src={item.variant.images?.[0]?.url ?? ''} alt={item.name?.en ?? 'Product image'} />
+              <img src={item.variant.images?.[0]?.url ?? ''} alt={item.name?.['en-US'] ?? 'Product image'} />
               <div className="cart-item-details">
-                <h3>{item.name?.en}</h3>
+                <h3>{item.name?.['en-US']}</h3>
                 <p>SKU: {item.variant.sku}</p>
                 <p>Quantity: {item.quantity}</p>
-                <p>Price: {(item.price?.value?.centAmount ?? 0) / 100} {item.price?.value?.currencyCode}</p>
+                <p>
+                  Price: {item.price?.discounted && <s className="price-original">{formatMoney(item.price.value)}</s>}{' '}
+                  <span className={item.price?.discounted ? 'price-discounted' : undefined}>
+                    {formatMoney(item.price?.discounted?.value ?? item.price?.value)}
+                  </span>
+                </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <form method="post" action="/api/cart">

@@ -1,6 +1,8 @@
 import { getProductBySlug, searchProducts } from '@/lib/ct-services';
 import ProductCard from '@/components/product-card';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { formatMoney, selectPublicPrice } from '@/lib/money';
 
 interface ProductPageProps {
   params: { slug: string };
@@ -14,8 +16,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const variant = product.masterVariant;
 
-  const priceData = variant?.prices?.[0]?.value;
-  const price = priceData ? `${priceData.centAmount / 100} ${priceData.currencyCode}` : 'Contact us';
+  const country = cookies().get('commerce_country')?.value ?? 'US';
+  const productPrice = selectPublicPrice(variant?.prices, country);
 
   const productName = product.name?.['en-US'] || product.name?.['en-GB'] || 'Product';
   const productDescription = product.description?.['en-US'] || product.description?.['en-GB'] || 'Product details';
@@ -29,7 +31,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // fetch related products (by first category or by name token)
   let relatedProducts: any[] = [];
   try {
-    const categoryId = product.categories?.[0]?.id || product.categories?.[0]?.obj?.id || product.categories?.[0]?.key;
+    const categoryId = product.categories?.[0]?.id || product.categories?.[0]?.obj?.id;
     const searchRes = await searchProducts({
       query: '',
       category: categoryId,
@@ -61,7 +63,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="panel">
           <div>
             <h1 className="product-title">{productName}</h1>
-            <p className="product-price">{price}</p>
+            <p className="product-price">
+              {productPrice ? (
+                <>
+                  {productPrice.discounted && <s className="price-original">{formatMoney(productPrice.value)}</s>}
+                  <span className={productPrice.discounted ? 'price-discounted' : undefined}>
+                    {formatMoney(productPrice.discounted?.value ?? productPrice.value)}
+                  </span>
+                </>
+              ) : 'Contact us'}
+            </p>
             <p className="product-meta">SKU: {sku}</p>
             <p className="product-meta">
               Status: {isInStock ? `In Stock (${availableQuantity} available)` : 'Out of Stock'}

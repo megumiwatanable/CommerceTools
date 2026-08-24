@@ -2,6 +2,9 @@
   "name": "commerce-app",
   "private": true,
   "version": "0.1.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,10 +12,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@commercetools/api-request-builder": "^5.0.0",
-    "@commercetools/sdk-client": "^2.0.0",
-    "@commercetools/sdk-middleware-http": "^2.0.0",
-    "@commercetools/sdk-middleware-logger": "^2.0.0",
+    "@commercetools/checkout-payments-enabler-sdk": "^0.0.7",
+    "@commercetools/platform-sdk": "^9.4.0",
+    "@commercetools/sdk-client-v2": "^4.0.1",
+    "@commercetools/ts-client": "^5.0.2",
     "axios": "^1.6.6",
     "core-js": "^2.6.12",
     "js-cookie": "^3.0.5",

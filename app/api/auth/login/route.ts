@@ -1,6 +1,6 @@
 // /app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { apiRoot, executeRequest } from '@/lib/ct-client';
+import { apiRoot } from '@/lib/ct-client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,16 +13,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(errorUrl);
     }
 
-    const response = await executeRequest({
-      method: 'POST',
-      uri: apiRoot
-        .login
-        .build(),
+    const response = await apiRoot.login().post({
       body: {
         email: email.toString(),
         password: password.toString(),
       }
-    });
+    }).execute();
 
     const customerId = response.body?.customer?.id;
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 interface ProductFiltersProps {
   searchParams: { q?: string; category?: string };
+  categories: Array<{ id: string; key?: string; name?: Record<string, string> }>;
 }
 
 export default function ProductFilters({ searchParams, categories }: ProductFiltersProps) {

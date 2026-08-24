@@ -1,17 +1,18 @@
 import { getCartFromRequest } from '@/lib/ct-cart';
 import CheckoutForm from '@/components/checkout-form';
+import { formatMoney } from '@/lib/money';
 
-export default async function CheckoutPage() {
+export default async function CheckoutPage({ searchParams }: { searchParams: { error?: string } }) {
   const cart = await getCartFromRequest();
   const lineItems = cart?.lineItems ?? [];
-  const totalPrice = cart?.totalPrice?.centAmount ? `${(cart.totalPrice.centAmount / 100).toFixed(2)} ${cart.totalPrice.currencyCode}` : '0.00';
+  const totalPrice = formatMoney(cart?.totalPrice);
 
   return (
     <div>
       <div className="brand-bar">
         <div>
           <h1 className="section-title">Checkout</h1>
-          <p>Enter your shipping details and place your order.</p>
+          <p>Complete your contact, delivery, and payment details.</p>
         </div>
       </div>
 
@@ -20,16 +21,31 @@ export default async function CheckoutPage() {
           <p>Your cart is empty. Add some products before checkout.</p>
         </div>
       ) : (
-        <div className="grid" style={{ gridTemplateColumns: '1fr 0.9fr', gap: '24px' }}>
+        <div className="checkout-layout">
           <div className="panel">
+            {searchParams.error && <p className="checkout-error">Please review your checkout details and try again.</p>}
+            <CheckoutForm
+              cartId={cart.id}
+              email={cart.customerEmail}
+              address={cart.shippingAddress}
+            />
+          </div>
+
+          <aside className="panel checkout-summary">
             <h2>Order summary</h2>
             <div className="cart-list">
               {lineItems.map((item: any) => (
                 <div key={item.id} className="cart-item">
+                  <img src={item.variant.images?.[0]?.url ?? ''} alt={item.name?.['en-US'] ?? 'Product image'} />
                   <div>
-                    <h3>{item.name?.en}</h3>
+                    <h3>{item.name?.['en-US']}</h3>
                     <p>Quantity: {item.quantity}</p>
-                    <p>Price: {(item.price?.value?.centAmount ?? 0) / 100} {item.price?.value?.currencyCode}</p>
+                    <p>
+                      Price: {item.price?.discounted && <s className="price-original">{formatMoney(item.price.value)}</s>}{' '}
+                      <span className={item.price?.discounted ? 'price-discounted' : undefined}>
+                        {formatMoney(item.price?.discounted?.value ?? item.price?.value)}
+                      </span>
+                    </p>
                   </div>
                 </div>
               ))}
@@ -38,11 +54,7 @@ export default async function CheckoutPage() {
               <h3>Total</h3>
               <p>{totalPrice}</p>
             </div>
-          </div>
-
-          <div className="panel">
-            <CheckoutForm cartId={cart.id} total={totalPrice} />
-          </div>
+          </aside>
         </div>
       )}
     </div>
