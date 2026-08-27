@@ -1,47 +1,46 @@
-"use client";
+import Link from "next/link";
+import { cookies } from "next/headers";
+import StorefrontSelector from "@/components/storefront-selector";
+import { resolveStorefrontContext } from "@/lib/storefront-context";
 
-import { useState, useEffect } from 'react';
-
-export default function SiteFooter() {
-  const [country, setCountry] = useState('US');
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const match = document.cookie.match(/(^|;)\s*commerce_country=([^;]+)/);
-      const legacyCountryCodes: Record<string, string> = { 'en-US': 'US', 'en-GB': 'GB', 'de-DE': 'DE' };
-      const rawCountry = match ? decodeURIComponent(match[2]) : '';
-      const savedCountry = (legacyCountryCodes[rawCountry] ?? rawCountry) || 'US';
-      setCountry(savedCountry);
-
-      if (!match || legacyCountryCodes[rawCountry]) {
-        document.cookie = `commerce_country=${savedCountry}; path=/; max-age=${60 * 60 * 24 * 365}`;
-      }
-    }
-  }, []);
-
-  function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const v = e.target.value;
-    setCountry(v);
-
-    // Set cookie
-    document.cookie = `commerce_country=${v}; path=/; max-age=${60 * 60 * 24 * 365}`;
-
-    // Reload page
-    window.location.href = window.location.pathname + window.location.search;
-  }
-
+export default async function SiteFooter() {
+  const cookieStore = cookies();
+  const context = await resolveStorefrontContext(
+    cookieStore.get("commerce_store_key")?.value,
+    cookieStore.get("commerce_country")?.value,
+  );
   return (
     <footer className="site-footer">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ color: '#6b7280' }}>© {new Date().getFullYear()} CommerceApp. All rights reserved.</div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <label style={{ color: '#6b7280', fontWeight: 600 }}>Country</label>
-          <select value={country} onChange={onChange} className="select">
-            <option value="US">United States</option>
-            <option value="GB">United Kingdom</option>
-            <option value="DE">Germany</option>
-          </select>
+      <div className="footer-inner">
+        <div className="footer-brand">
+          <Link href="/" className="site-logo">
+            Marketly
+          </Link>
+          <p>Thoughtfully chosen products for an easier, better everyday.</p>
         </div>
+        <div>
+          <h3>Shop</h3>
+          <Link href="/products">All products</Link>
+          <Link href="/cart">Shopping bag</Link>
+          <Link href="/account">My account</Link>
+        </div>
+        <div>
+          <h3>Customer care</h3>
+          <a href="mailto:support@marketly.example">Contact us</a>
+          <Link href="/account/addresses">Delivery addresses</Link>
+          <Link href="/checkout">Checkout</Link>
+        </div>
+        <StorefrontSelector
+          stores={context.stores}
+          initialStoreKey={context.store.key}
+          initialCountry={context.country.code}
+        />
+      </div>
+      <div className="footer-bottom">
+        <span>
+          © {new Date().getFullYear()} Marketly. All rights reserved.
+        </span>
+        <span>Secure checkout · Simple returns</span>
       </div>
     </footer>
   );

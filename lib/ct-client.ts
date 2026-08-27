@@ -1,9 +1,9 @@
-import { createApiBuilderFromCtpClient } from '@commercetools/platform-sdk';
+import { createApiBuilderFromCtpClient } from "@commercetools/platform-sdk";
 import {
   createAuthMiddlewareForClientCredentialsFlow,
   createClient,
   createHttpMiddleware,
-} from '@commercetools/ts-client';
+} from "@commercetools/ts-client";
 
 const projectKey = process.env.NEXT_PUBLIC_CT_PROJECT_KEY;
 const apiUrl = process.env.NEXT_PUBLIC_CT_API_URL;
@@ -12,7 +12,7 @@ const clientId = process.env.CT_CLIENT_ID;
 const clientSecret = process.env.CT_CLIENT_SECRET;
 
 if (!projectKey || !apiUrl || !authUrl || !clientId || !clientSecret) {
-  throw new Error('Missing commercetools environment variables');
+  throw new Error("Missing commercetools environment variables");
 }
 
 const authMiddleware = createAuthMiddlewareForClientCredentialsFlow({
@@ -23,8 +23,13 @@ const authMiddleware = createAuthMiddlewareForClientCredentialsFlow({
   httpClient: fetch,
 });
 
-const httpMiddleware = createHttpMiddleware({ host: apiUrl, httpClient: fetch });
-const ctpClient = createClient({ middlewares: [authMiddleware, httpMiddleware] });
+const httpMiddleware = createHttpMiddleware({
+  host: apiUrl,
+  httpClient: fetch,
+});
+const ctpClient = createClient({
+  middlewares: [authMiddleware, httpMiddleware],
+});
 
 // The generated Platform SDK exposes typed request builders and executes them
 // through the ts-client configured above.

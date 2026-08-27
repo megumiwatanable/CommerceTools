@@ -1,64 +1,77 @@
-import { searchProducts, fetchCategories } from '@/lib/ct-services';
-import ProductCard from '@/components/product-card';
-import ProductFilters from '@/components/product-filters';
-import { cookies } from 'next/headers';
-import Link from 'next/link';
+import { searchProducts, fetchCategories } from "@/lib/ct-services";
+import ProductCard from "@/components/product-card";
+import ProductFilters from "@/components/product-filters";
+import CatalogPagination from "@/components/catalog-pagination";
+import { cookies } from "next/headers";
+import { resolveStorefrontContext } from "@/lib/storefront-context";
 
-interface ProductsPageProps {
-  searchParams: { q?: string; category?: string };
+interface Props {
+  searchParams: { q?: string; category?: string | string[]; page?: string };
 }
 
-export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  const countryCookie = cookies().get('commerce_country')?.value || 'US';
-  const countryToLocale: Record<string, string> = {
-    US: 'en',
-    GB: 'en-GB',
-    DE: 'de',
-    FR: 'fr',
-  };
-  const locale = countryToLocale[countryCookie] || 'en';
-
-  const products = await searchProducts({
-    query: searchParams.q ?? '',
-    category: searchParams.category,
-    limit: 24,
-    locale,
-  });
-
-  const categories = await fetchCategories();
-
+export default async function ProductsPage({ searchParams }: Props) {
+  const cookieStore = cookies();
+  const storefront = await resolveStorefrontContext(
+    cookieStore.get("commerce_store_key")?.value,
+    cookieStore.get("commerce_country")?.value,
+  );
+  const locale = storefront.locale;
+  const page = Math.max(1, Number(searchParams.page) || 1);
+  const limit = 12;
+  const [products, categories] = await Promise.all([
+    searchProducts({
+      query: searchParams.q ?? "",
+      category: searchParams.category,
+      limit,
+      offset: (page - 1) * limit,
+      locale,
+      storeKey: storefront.store.key,
+    }),
+    fetchCategories(),
+  ]);
   return (
     <div>
-      <div className="brand-bar">
-        <div>
-          <h1 className="section-title">Product catalog</h1>
-          <p>Filter products by search term and category.</p>
-        </div>
-      </div>
-
-      <div style={{ marginTop: '12px', marginBottom: '12px' }}>
-        <div style={{ marginLeft: 'auto' }}>
-          <ProductFilters searchParams={searchParams} categories={categories} />
-        </div>
-      </div>
-
-      <section style={{ marginTop: '24px' }}>
-        {(!products?.results || products.results.length === 0) ? (
-          <p>No products found for your search.</p>
-        ) : (
-          <div className="grid grid-3">
-            {(() => {
-              const cards: JSX.Element[] = [];
-              const list = (products.results as any[]) || [];
-              for (let i = 0; i < list.length; i++) {
-                const p = list[i];
-                cards.push(<ProductCard key={p.id} product={p} />);
-              }
-              return cards;
-            })()}
-          </div>
-        )}
+      <section className="page-heading catalog-heading">
+        <p className="eyebrow">The collection</p>
+        <h1>Shop all products</h1>
+        <p>Find the pieces that fit your everyday.</p>
       </section>
+      <div className="catalog-layout">
+        <aside className="catalog-sidebar">
+          <ProductFilters searchParams={searchParams} categories={categories} />
+        </aside>
+        <section className="catalog-results">
+          <div className="catalog-results-heading">
+            <strong>
+              {products.total ?? products.results.length} product
+              {(products.total ?? products.results.length) === 1 ? "" : "s"}
+            </strong>
+            {searchParams.q && <span>Results for “{searchParams.q}”</span>}
+          </div>
+          {products.results.length ? (
+            <>
+              <div className="grid grid-3">
+                {products.results.map((product: any) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+              <CatalogPagination
+                basePath="/products"
+                page={page}
+                total={products.total}
+                limit={limit}
+                query={searchParams.q}
+                categories={searchParams.category}
+              />
+            </>
+          ) : (
+            <div className="panel empty-state">
+              <h2>No products found</h2>
+              <p>Try another search term or browse a different category.</p>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

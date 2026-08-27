@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function NotFound() {
   return (
@@ -12,7 +12,7 @@ export default function NotFound() {
 
       <div className="panel">
         <p>Please check the URL or return to the homepage.</p>
-        <Link href="/" className="button" style={{ marginTop: '16px' }}>
+        <Link href="/" className="button" style={{ marginTop: "16px" }}>
           Go home
         </Link>
       </div>

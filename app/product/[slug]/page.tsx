@@ -1,124 +1,156 @@
-import { getProductBySlug, searchProducts } from '@/lib/ct-services';
-import ProductCard from '@/components/product-card';
-import { notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { formatMoney, selectPublicPrice } from '@/lib/money';
+import { getProductBySlug, searchProducts } from "@/lib/ct-services";
+import ProductCard from "@/components/product-card";
+import ProductGallery from "@/components/product-gallery";
+import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
+import Link from "next/link";
+import { formatMoney, selectPublicPrice } from "@/lib/money";
+import { resolveStorefrontContext } from "@/lib/storefront-context";
+import { getProductHref } from "@/lib/product-link";
 
-interface ProductPageProps {
+interface Props {
   params: { slug: string };
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getProductBySlug(params.slug);
-  if (!product) {
-    notFound();
-  }
-
+export default async function ProductPage({ params }: Props) {
+  const cookieStore = cookies();
+  const storefront = await resolveStorefrontContext(
+    cookieStore.get("commerce_store_key")?.value,
+    cookieStore.get("commerce_country")?.value,
+  );
+  const product = await getProductBySlug(params.slug, storefront.store.key);
+  if (!product) notFound();
   const variant = product.masterVariant;
-
-  const country = cookies().get('commerce_country')?.value ?? 'US';
-  const productPrice = selectPublicPrice(variant?.prices, country);
-
-  const productName = product.name?.['en-US'] || product.name?.['en-GB'] || 'Product';
-  const productDescription = product.description?.['en-US'] || product.description?.['en-GB'] || 'Product details';
-
-  const imageUrl = variant?.images?.[0]?.url;
-  const sku = variant?.sku || 'N/A';
-
-  const availableQuantity = variant?.availability?.availableQuantity || 0;
-  const isInStock = availableQuantity > 0;
-
-  // fetch related products (by first category or by name token)
-  let relatedProducts: any[] = [];
-  try {
-    const categoryId = product.categories?.[0]?.id || product.categories?.[0]?.obj?.id;
-    const searchRes = await searchProducts({
-      query: '',
+  const price = selectPublicPrice(variant?.prices, storefront.country.code);
+  const name =
+    product.name?.["en-US"] ||
+    product.name?.["en-GB"] ||
+    Object.values(product.name ?? {})[0] ||
+    "Product";
+  const description =
+    product.description?.["en-US"] ||
+    product.description?.["en-GB"] ||
+    Object.values(product.description ?? {})[0] ||
+    "Product details";
+  const images = (variant?.images ?? []).map((image: any) => ({
+    url: image.url,
+    label: image.label,
+  }));
+  const sku = variant?.sku || "N/A";
+  const quantity = variant?.availability?.availableQuantity || 0;
+  const inStock = quantity > 0;
+  const categoryId =
+    product.categories?.[0]?.id || product.categories?.[0]?.obj?.id;
+  const related = (
+    await searchProducts({
+      query: "",
       category: categoryId,
       limit: 6,
-    });
-    relatedProducts = (searchRes?.results || []).filter((p: any) => p.id !== product.id).slice(0, 3);
-    if (relatedProducts.length === 0) {
-      const nameToken = productName.split(' ')[0] || '';
-      const searchRes2 = await searchProducts({ query: nameToken, limit: 6 });
-      relatedProducts = (searchRes2?.results || []).filter((p: any) => p.id !== product.id).slice(0, 3);
-    }
-  } catch (e) {
-    relatedProducts = [];
-  }
+      locale: storefront.locale,
+      storeKey: storefront.store.key,
+    })
+  ).results
+    .filter((item: any) => item.id !== product.id)
+    .slice(0, 4);
 
   return (
-    <div>
-      <div className="grid" style={{ gridTemplateColumns: '1fr 420px', gap: '28px' }}>
-        <div className="product-card">
-          {imageUrl ? (
-            <img
-              className="product-detail-image"
-              src={imageUrl}
-              alt={productName}
-            />
-          ) : null}
-        </div>
-
-        <div className="panel">
-          <div>
-            <h1 className="product-title">{productName}</h1>
-            <p className="product-price">
-              {productPrice ? (
-                <>
-                  {productPrice.discounted && <s className="price-original">{formatMoney(productPrice.value)}</s>}
-                  <span className={productPrice.discounted ? 'price-discounted' : undefined}>
-                    {formatMoney(productPrice.discounted?.value ?? productPrice.value)}
-                  </span>
-                </>
-              ) : 'Contact us'}
-            </p>
-            <p className="product-meta">SKU: {sku}</p>
-            <p className="product-meta">
-              Status: {isInStock ? `In Stock (${availableQuantity} available)` : 'Out of Stock'}
-            </p>
-            <p style={{ marginTop: '16px', lineHeight: '1.7' }}>{productDescription}</p>
+    <div className="product-page">
+      <nav className="breadcrumb" aria-label="Breadcrumb">
+        <Link href="/">Home</Link>
+        <span>/</span>
+        <Link href="/products">Products</Link>
+        <span>/</span>
+        <span>{name}</span>
+      </nav>
+      <div className="product-detail-layout">
+        <ProductGallery images={images} alt={name} />
+        <section className="product-buy-panel">
+          <p className="eyebrow">Product details</p>
+          <h1>{name}</h1>
+          <p className="product-detail-sku">SKU: {sku}</p>
+          <div className="product-detail-price">
+            {price ? (
+              <>
+                {price.discounted && (
+                  <s className="price-original">{formatMoney(price.value)}</s>
+                )}
+                <strong
+                  className={price.discounted ? "price-discounted" : undefined}
+                >
+                  {formatMoney(price.discounted?.value ?? price.value)}
+                </strong>
+              </>
+            ) : (
+              <strong>Contact us</strong>
+            )}
           </div>
-          <form method="post" action="/api/cart" className="form-group">
+          <p className={`stock-status ${inStock ? "in-stock" : ""}`}>
+            <span />
+            {inStock
+              ? `${quantity} available · In stock`
+              : "Currently out of stock"}
+          </p>
+          <div className="product-description">
+            <h2>About this product</h2>
+            <p>{description}</p>
+          </div>
+          <div className="product-purchase-actions">
+            <form method="post" action="/api/cart" className="product-add-form">
             <input type="hidden" name="action" value="add" />
             <input type="hidden" name="sku" value={sku} />
-
             <label htmlFor="quantity">Quantity</label>
-            <input
-              type="number"
-              id="quantity"
-              name="quantity"
-              defaultValue={1}
-              min={1}
-              max={availableQuantity || 99}
-              className="input"
-              disabled={!isInStock}
-            />
-
-            {!isInStock && (
-              <p style={{ color: '#dc3545', marginTop: '8px', fontSize: '14px' }}>
-                This product is currently out of stock.
-              </p>
-            )}
-
-            <div style={{ marginTop: '14px' }}>
-              <button className="button" type="submit" disabled={!isInStock}>
-                {isInStock ? 'Add to cart' : 'Out of Stock'}
+            <div>
+              <input
+                type="number"
+                id="quantity"
+                name="quantity"
+                defaultValue={1}
+                min={1}
+                max={quantity || 99}
+                className="input"
+                disabled={!inStock}
+              />
+              <button className="button" type="submit" disabled={!inStock}>
+                {inStock ? "Add to cart" : "Out of stock"}
               </button>
             </div>
-          </form>
-        </div>
+            </form>
+            <form method="post" action="/api/wishlist" className="wishlist-save-form product-detail-heart">
+            <input type="hidden" name="action" value="add" />
+            <input type="hidden" name="productId" value={product.id} />
+            <input type="hidden" name="variantId" value={variant.id} />
+            <input type="hidden" name="returnTo" value={getProductHref(product)} />
+            <button className="icon-button heart-button" type="submit" aria-label="Save to wishlist" title="Save to wishlist">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+            </form>
+          </div>
+          <p className="product-assurance">
+            Secure checkout · Easy returns · Delivery calculated at checkout
+          </p>
+        </section>
       </div>
-
-      <section style={{ marginTop: '32px' }}>
-        <h2 className="section-title">You may also like</h2>
-        <div className="grid grid-3">
-          {relatedProducts.length === 0 ? (
-            <p>No recommendations available.</p>
-          ) : (
-            relatedProducts.map((p: any) => <ProductCard key={p.id} product={p} />)
-          )}
+      <section className="product-related">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">More to explore</p>
+            <h2>You may also like</h2>
+          </div>
+          <Link href="/products" className="text-button">
+            Shop all
+          </Link>
         </div>
+        {related.length ? (
+          <div className="grid grid-4">
+            {related.map((item: any) => (
+              <ProductCard key={item.id} product={item} />
+            ))}
+          </div>
+        ) : (
+          <p className="empty-copy">
+            More recommendations will appear here soon.
+          </p>
+        )}
       </section>
     </div>
   );
