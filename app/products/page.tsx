@@ -4,6 +4,7 @@ import ProductFilters from "@/components/product-filters";
 import CatalogPagination from "@/components/catalog-pagination";
 import { cookies } from "next/headers";
 import { resolveStorefrontContext } from "@/lib/storefront-context";
+import { getReviewSummaries } from "@/lib/ct-reviews";
 
 interface Props {
   searchParams: { q?: string; category?: string | string[]; page?: string };
@@ -29,6 +30,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     }),
     fetchCategories(),
   ]);
+  const reviewSummaries = await getReviewSummaries(products.results.map((product: any) => product.id));
   return (
     <div>
       <section className="page-heading catalog-heading">
@@ -52,7 +54,7 @@ export default async function ProductsPage({ searchParams }: Props) {
             <>
               <div className="grid grid-3">
                 {products.results.map((product: any) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard key={product.id} product={product} reviewSummary={reviewSummaries.get(product.id)} />
                 ))}
               </div>
               <CatalogPagination

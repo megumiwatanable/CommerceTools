@@ -22,3 +22,4 @@ npm run dev
 - Checkout flow
 - Customer authentication and account page
 - Search page
+- Product ratings and customer reviews

@@ -27,6 +27,8 @@ const FLASH_MESSAGES = {
   password_updated: { type: "success", message: "Your password was updated. You can now sign in." },
   reset_invalid: { type: "error", message: "This reset link is invalid or expired." },
   checkout_error: { type: "error", message: "Please review your checkout details and try again." },
+  review_saved: { type: "success", message: "Thank you. Your review has been saved." },
+  review_error: { type: "error", message: "Your review could not be saved. Please check it and try again." },
 } as const;
 
 export function withFlash(response: NextResponse, code: FlashCode) {

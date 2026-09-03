@@ -7,6 +7,9 @@ import Link from "next/link";
 import { formatMoney, selectPublicPrice } from "@/lib/money";
 import { resolveStorefrontContext } from "@/lib/storefront-context";
 import { getProductHref } from "@/lib/product-link";
+import { getProductReviews, getReviewSummaries } from "@/lib/ct-reviews";
+import { getCurrentCustomer } from "@/lib/ct-customers";
+import ProductReviewModal from "@/components/product-review-modal";
 
 interface Props {
   params: { slug: string };
@@ -52,6 +55,12 @@ export default async function ProductPage({ params }: Props) {
   ).results
     .filter((item: any) => item.id !== product.id)
     .slice(0, 4);
+  const [reviews, customer, relatedReviewSummaries] = await Promise.all([
+    getProductReviews(product.id),
+    getCurrentCustomer(),
+    getReviewSummaries(related.map((item: any) => item.id)),
+  ]);
+  const productHref = getProductHref(product);
 
   return (
     <div className="product-page">
@@ -68,6 +77,13 @@ export default async function ProductPage({ params }: Props) {
           <p className="eyebrow">Product details</p>
           <h1>{name}</h1>
           <p className="product-detail-sku">SKU: {sku}</p>
+          <ProductReviewModal
+            productId={product.id}
+            productName={String(name)}
+            returnTo={productHref}
+            reviews={reviews}
+            signedIn={Boolean(customer)}
+          />
           <div className="product-detail-price">
             {price ? (
               <>
@@ -143,7 +159,7 @@ export default async function ProductPage({ params }: Props) {
         {related.length ? (
           <div className="grid grid-4">
             {related.map((item: any) => (
-              <ProductCard key={item.id} product={item} />
+              <ProductCard key={item.id} product={item} reviewSummary={relatedReviewSummaries.get(item.id)} />
             ))}
           </div>
         ) : (

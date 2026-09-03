@@ -2,6 +2,7 @@ import { searchProducts } from "@/lib/ct-services";
 import ProductCard from "@/components/product-card";
 import { cookies } from "next/headers";
 import { resolveStorefrontContext } from "@/lib/storefront-context";
+import { getReviewSummaries } from "@/lib/ct-reviews";
 
 export default async function HomePage() {
   const cookieStore = cookies();
@@ -14,6 +15,7 @@ export default async function HomePage() {
     limit: 6,
     storeKey: storefront.store.key,
   });
+  const reviewSummaries = await getReviewSummaries(products.results.map((product: any) => product.id));
 
   return (
     <div>
@@ -45,7 +47,7 @@ export default async function HomePage() {
         </div>
         <div className="grid grid-3">
           {products.results.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} reviewSummary={reviewSummaries.get(product.id)} />
           ))}
         </div>
       </section>

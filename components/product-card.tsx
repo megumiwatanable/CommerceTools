@@ -3,12 +3,15 @@ import { cookies } from "next/headers";
 import { formatMoney, selectPublicPrice } from "@/lib/money";
 import { getProductHref } from "@/lib/product-link";
 import { resolveStorefrontContext } from "@/lib/storefront-context";
+import ProductRating from "@/components/product-rating";
+import type { ReviewSummary } from "@/lib/ct-reviews";
 
 interface ProductCardProps {
   product: any;
+  reviewSummary?: ReviewSummary;
 }
 
-export default async function ProductCard({ product }: ProductCardProps) {
+export default async function ProductCard({ product, reviewSummary }: ProductCardProps) {
   const variant = product.masterVariant;
   const cookieStore = cookies();
   const storefront = await resolveStorefrontContext(
@@ -53,6 +56,7 @@ export default async function ProductCard({ product }: ProductCardProps) {
       <h3 className="product-card-title"><Link href={productHref}>{name}</Link></h3>
 
       <div className="product-card-body">
+        {reviewSummary && <ProductRating summary={reviewSummary} compact />}
         <p className="product-price">
           <svg
             className="icon icon-price"
